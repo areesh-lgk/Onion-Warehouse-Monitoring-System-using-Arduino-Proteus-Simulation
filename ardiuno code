@@ -1,0 +1,116 @@
+#include <SoftwareSerial.h>
+#define RX_PIN 0
+#define TX_PIN 1
+#include <LiquidCrystal.h>
+#include <DHT.h>
+
+// -------------------- LCD setup --------------------
+LiquidCrystal lcd(13,12,11,10,9,8);
+
+// -------------------- DHT11 setup --------------------
+#define DHTPIN 2
+#define DHTTYPE DHT11
+DHT dht(DHTPIN, DHTTYPE);
+
+// -------------------- Sensor Pins --------------------
+#define GAS_PIN A0     // Analog pin for Gas Sensor
+#define LDR_PIN A1     // Analog pin for LDR
+#define FAN_PIN 5      // Fan output
+#define LIGHT_PIN 7    // Light output
+
+// -------------------- LDR Threshold --------------------
+#define LDR_THRESHOLD 500   // Adjust as needed (lower = darker)
+
+void setup() {
+  lcd.begin(16,2);
+  dht.begin();
+  Serial.begin(9600);
+
+  pinMode(GAS_PIN, INPUT);
+  pinMode(LDR_PIN, INPUT);
+  pinMode(FAN_PIN, OUTPUT);
+  pinMode(LIGHT_PIN, OUTPUT);
+
+  digitalWrite(FAN_PIN, LOW);
+  digitalWrite(LIGHT_PIN, LOW);
+
+  lcd.setCursor(0, 0);
+  lcd.print(" Onion Warehouse ");
+  lcd.setCursor(0, 1);
+  lcd.print("  Monitor by IoT  ");
+  delay(2000);
+  lcd.clear();
+}
+
+void loop() {
+  // -------------------- Sensor Readings --------------------
+  float humidity = dht.readHumidity();
+  float temperature = dht.readTemperature();
+  int gasValue = analogRead(GAS_PIN);
+  int ldrValue = analogRead(LDR_PIN);  // Analog value 0–1023
+
+  if (isnan(humidity) || isnan(temperature)) {
+    Serial.println("DHT read failed!");
+    delay(2000);
+    return;
+  }
+ if ((temperature>30)||(gasValue>500))
+ {
+  digitalWrite(FAN_PIN,HIGH );
+  Serial.println("T:");
+  Serial.print(temperature);
+  lcd.setCursor(0,0);
+  lcd.print("T:");
+  lcd.setCursor(2,0);
+  lcd.print(temperature);
+  lcd.setCursor(5,0);
+  lcd.print("G:");
+  lcd.setCursor(7,0);
+  lcd.print(gasValue);
+  {
+    lcd.setCursor(12,0);
+    lcd.print("F");
+    Serial.println("F");
+  }
+ }
+else 
+{
+  digitalWrite(FAN_PIN,LOW );
+  lcd.setCursor(12,0);
+    lcd.print("f");
+    Serial.println("l");
+}
+
+ if ((humidity>70)||(ldrValue>500))
+ {
+  digitalWrite(LIGHT_PIN,HIGH );
+  Serial.println("H:");
+  Serial.print(humidity);
+  Serial.println("L:");
+  Serial.print(ldrValue);
+  lcd.setCursor(0,1);
+  lcd.print("H:");
+  lcd.setCursor(2,1);
+  lcd.print(humidity);
+  lcd.setCursor(5,1);
+  lcd.print("L:");
+  lcd.setCursor(7,1);
+  lcd.print(ldrValue);
+  {
+    lcd.setCursor(12,1);
+    lcd.print("L");
+    Serial.println("L");
+  }
+ }
+ else 
+ {
+ digitalWrite(LIGHT_PIN,LOW );
+ lcd.setCursor(12,1);
+ lcd.print("l");
+ Serial.println("l");
+ 
+ }
+  // -------------------- Serial Monitor --------------------
+ 
+  delay(2000);
+}
